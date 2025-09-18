@@ -147,7 +147,27 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
                 child: ListTile(
                   title: Text(activity.name),
-                  subtitle: Text('目標: ${activity.targetCount} 回'),
+                  subtitle: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('目標: ${activity.targetCount} 回'),
+                      if (activity.tags.isNotEmpty) ...[
+                        const SizedBox(height: 4),
+                        Wrap(
+                          spacing: 6.0,
+                          runSpacing: 4.0,
+                          children: activity.tags.map((tag) {
+                            return Chip(
+                              label: Text(tag.name, style: const TextStyle(fontSize: 12)),
+                              backgroundColor: Color(tag.colorValue).withOpacity(0.2),
+                              padding: const EdgeInsets.symmetric(horizontal: 4.0),
+                              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                            );
+                          }).toList(),
+                        ),
+                      ],
+                    ],
+                  ),
                   onTap: () {
                   // 最後に記録されたメモを探す
                   final recordsBox = Hive.box<Record>('records');

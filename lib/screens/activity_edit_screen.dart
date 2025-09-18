@@ -35,8 +35,9 @@ class _ActivityEditScreenState extends State<ActivityEditScreen> {
     // とりあえずランダムな色を割り当てる！
     final newTag = Tag(
       name: tagName,
-      colorValue: (Colors.primaries..shuffle()).first.value,
+      colorValue: (Colors.primaries.toList()..shuffle()).first.value,
     );
+    // Hiveに保存するだけ！setStateは呼ばないのがポイント！
     tagsBox.add(newTag);
     _newTagController.clear();
   }
@@ -130,6 +131,7 @@ class _ActivityEditScreenState extends State<ActivityEditScreen> {
                       child: TextField(
                         controller: _newTagController,
                         decoration: const InputDecoration(labelText: '新しいタグを追加'),
+                        onSubmitted: (_) => _addNewTag(),
                       ),
                     ),
                     IconButton(
@@ -152,7 +154,7 @@ class _ActivityEditScreenState extends State<ActivityEditScreen> {
                       spacing: 8.0,
                       children: allTags.map((tag) {
                         final isSelected =
-                            _selectedTags.any((selected) => selected.id == tag.id);
+                            _selectedTags.any((selected) => selected.key == tag.key);
                         return FilterChip(
                           label: Text(tag.name),
                           selected: isSelected,
@@ -161,7 +163,7 @@ class _ActivityEditScreenState extends State<ActivityEditScreen> {
                               if (selected) {
                                 _selectedTags.add(tag);
                               } else {
-                                _selectedTags.removeWhere((t) => t.id == tag.id);
+                                _selectedTags.removeWhere((t) => t.key == tag.key);
                               }
                             });
                           },
