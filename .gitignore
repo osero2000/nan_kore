@@ -1,0 +1,55 @@
+# Miscellaneous
+*.class
+*.log
+*.pyc
+*.swp
+.DS_Store
+.atom/
+*.dart_tool/
+.buildlog/
+.history
+.svn/
+
+# IntelliJ
+.idea/
+*.iml
+*.ipr
+*.iws
+out/
+
+# Visual Studio Code
+.vscode/
+
+# Flutter/Dart/Pub
+.packages
+.pub-cache/
+build/
+
+# Generated code
+lib/models/*.g.dart
+
+# Hive database files
+*.hive
+*.lock
+
+# Android
+android/app/src/main/java/io/flutter/plugins/GeneratedPluginRegistrant.java
+android/key.properties
+android/local.properties
+android/.gradle/
+
+# iOS
+ios/Flutter/App.framework
+ios/Flutter/engine.framework
+ios/Flutter/flutter_assets/
+ios/Flutter/Generated.xcconfig
+ios/Runner/GeneratedPluginRegistrant.*
+ios/Runner.xcworkspace/
+ios/.symlinks/
+ios/Pods/
+ios/Podfile.lock
+
+# Windows/Linux/macOS
+windows/flutter/ephemeral/
+linux/flutter/ephemeral/
+macos/Flutter/ephemeral/
