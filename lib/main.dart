@@ -5,6 +5,7 @@ import 'package:nan_kore/models/record.dart';
 import 'package:nan_kore/models/tag.dart';
 import 'package:nan_kore/screens/activity_edit_screen.dart';
 import 'package:nan_kore/screens/count_screen.dart';
+import 'package:intl/date_symbol_data_local.dart';
 
 Future<void> main() async {
   // Flutterの初期化を待つ！これ大事！
@@ -22,6 +23,9 @@ Future<void> main() async {
   await Hive.openBox<Activity>('activities');
   await Hive.openBox<Tag>('tags');
   await Hive.openBox<Record>('records');
+
+  // intlパッケージの日本語ロケールを初期化
+  await initializeDateFormatting('ja_JP', null);
 
   runApp(const MyApp());
 }
@@ -76,9 +80,38 @@ class _HomeScreenState extends State<HomeScreen> {
                 title: Text(activity.name),
                 subtitle: Text('目標: ${activity.targetCount} 回'),
                 onTap: () {
+                  // 最後に記録されたメモを探す
+                  final recordsBox = Hive.box<Record>('records');
+                  final activityRecords = recordsBox.values
+                      .where((record) => record.activityId == activity.id)
+                      .toList();
+                  activityRecords.sort((a, b) => b.date.compareTo(a.date)); // 新しい順に並び替え
+
+                  int? lastCount;
+                  DateTime? lastDate;
+                  if (activityRecords.isNotEmpty) {
+                    // 一番新しい記録がリストの最初に来る
+                    lastCount = activityRecords.first.count;
+                    lastDate = activityRecords.first.date;
+                  }
+
+                  String? lastMemo;
+                  // 空じゃないメモが見つかるまで探す！
+                  for (final record in activityRecords) {
+                    if (record.memo != null && record.memo!.isNotEmpty) {
+                      lastMemo = record.memo;
+                      break;
+                    }
+                  }
+
                   Navigator.of(context).push(
                     MaterialPageRoute(
-                      builder: (ctx) => CountScreen(activity: activity),
+                      builder: (ctx) => CountScreen(
+                        activity: activity,
+                        lastCount: lastCount,
+                        lastDate: lastDate,
+                        lastMemo: lastMemo,
+                      ),
                     ),
                   );
                 },
