@@ -4,6 +4,7 @@ import 'package:nan_kore/models/activity.dart';
 import 'package:nan_kore/models/record.dart';
 import 'package:nan_kore/models/tag.dart';
 import 'package:nan_kore/screens/activity_edit_screen.dart';
+import 'package:nan_kore/screens/count_screen.dart';
 
 Future<void> main() async {
   // Flutterの初期化を待つ！これ大事！
@@ -75,7 +76,11 @@ class _HomeScreenState extends State<HomeScreen> {
                 title: Text(activity.name),
                 subtitle: Text('目標: ${activity.targetCount} 回'),
                 onTap: () {
-                  // TODO: カウント画面へ遷移する処理
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (ctx) => CountScreen(activity: activity),
+                    ),
+                  );
                 },
               );
             },
