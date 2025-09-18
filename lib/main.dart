@@ -32,6 +32,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'なんでもカウンター',
+      debugShowCheckedModeBanner: false, // これで右上の"DEBUG"が消えるよん！
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.pinkAccent),
         useMaterial3: true,
@@ -42,9 +43,14 @@ class MyApp extends StatelessWidget {
 }
 
 // とりあえずのホーム画面！これからガチで作り込んでくよ！
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -52,8 +58,29 @@ class HomeScreen extends StatelessWidget {
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
         title: const Text('ダッシュボード'),
       ),
-      body: const Center(
-        child: Text('ここにアクティビティ一覧が表示されるよ！✨'),
+      body: ValueListenableBuilder<Box<Activity>>(
+        valueListenable: Hive.box<Activity>('activities').listenable(),
+        builder: (context, box, _) {
+          final activities = box.values.toList().cast<Activity>();
+          if (activities.isEmpty) {
+            return const Center(
+              child: Text('右下の＋ボタンから最初のアクティビティを追加しよう！✨'),
+            );
+          }
+          return ListView.builder(
+            itemCount: activities.length,
+            itemBuilder: (ctx, index) {
+              final activity = activities[index];
+              return ListTile(
+                title: Text(activity.name),
+                subtitle: Text('目標: ${activity.targetCount} 回'),
+                onTap: () {
+                  // TODO: カウント画面へ遷移する処理
+                },
+              );
+            },
+          );
+        },
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {

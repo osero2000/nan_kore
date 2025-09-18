@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:hive_flutter/hive_flutter.dart';
+import 'package:nan_kore/models/activity.dart';
+import 'package:nan_kore/models/tag.dart';
 
 class ActivityEditScreen extends StatefulWidget {
   const ActivityEditScreen({super.key});
@@ -12,13 +15,26 @@ class _ActivityEditScreenState extends State<ActivityEditScreen> {
   String _name = '';
   int _targetCount = 10;
 
-  void _saveForm() {
+  void _saveForm() async {
     final isValid = _formKey.currentState!.validate();
     if (!isValid) {
       return;
     }
     _formKey.currentState!.save();
-    // TODO: Hiveに保存する処理をあとで書く！
+
+    final activitiesBox = Hive.box<Activity>('activities');
+    // 今はまだタグ機能がないから、空っぽのリストを渡しておく！
+    final tagsBox = Hive.box<Tag>('tags');
+    final emptyTagsList = HiveList<Tag>(tagsBox);
+
+    final newActivity = Activity(
+      name: _name,
+      targetCount: _targetCount,
+      tags: emptyTagsList,
+    );
+    await activitiesBox.add(newActivity);
+
+    if (!mounted) return;
     Navigator.of(context).pop();
   }
 
@@ -78,4 +94,3 @@ class _ActivityEditScreenState extends State<ActivityEditScreen> {
     );
   }
 }
-
