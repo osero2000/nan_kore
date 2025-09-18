@@ -76,10 +76,79 @@ class _HomeScreenState extends State<HomeScreen> {
             itemCount: activities.length,
             itemBuilder: (ctx, index) {
               final activity = activities[index];
-              return ListTile(
-                title: Text(activity.name),
-                subtitle: Text('目標: ${activity.targetCount} 回'),
-                onTap: () {
+              return Dismissible(
+                key: ValueKey(activity.key), // それぞれの項目を区別するための鍵！
+                direction: DismissDirection.endToStart, // 右から左へのスワイプだけ許可
+                onDismissed: (direction) async {
+                  // 0. 削除するデータをコピーして一時的に保存
+                  final activityToDelete = activity;
+                  final activityName = activityToDelete.name;
+
+                  // Activityのコピーを作成
+                  final tagsBox = Hive.box<Tag>('tags');
+                  final tagsCopy = HiveList<Tag>(tagsBox)..addAll(activityToDelete.tags);
+                  final activityCopy = Activity(
+                    name: activityToDelete.name,
+                    targetCount: activityToDelete.targetCount,
+                    tags: tagsCopy,
+                    notificationEnabled: activityToDelete.notificationEnabled,
+                    notificationDays: List<int>.from(activityToDelete.notificationDays),
+                    notificationTime: activityToDelete.notificationTime,
+                  )
+                    ..id = activityToDelete.id
+                    ..createdAt = activityToDelete.createdAt;
+
+                  // 関連レコードのコピーを作成
+                  final recordsBox = Hive.box<Record>('records');
+                  final relatedRecords = recordsBox.values
+                      .where((record) => record.activityId == activityToDelete.id)
+                      .toList();
+                  final recordCopies = relatedRecords.map((rec) => Record(
+                    activityId: rec.activityId,
+                    count: rec.count,
+                    memo: rec.memo,
+                    reaction: rec.reaction,
+                  )
+                    ..id = rec.id
+                    ..date = rec.date).toList();
+
+                  // 1. データを削除
+                  final recordKeysToDelete = relatedRecords.map((rec) => rec.key as int).toList();
+                  await recordsBox.deleteAll(recordKeysToDelete);
+                  await activityToDelete.delete();
+
+                  // 2. 元に戻すオプション付きのSnackBarを表示
+                  if (!mounted) return;
+                  ScaffoldMessenger.of(context).removeCurrentSnackBar();
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('$activityName を削除しました'),
+                      duration: const Duration(seconds: 4),
+                      action: SnackBarAction(
+                        label: '元に戻す',
+                        onPressed: () async {
+                          // データを復元
+                          final activitiesBox = Hive.box<Activity>('activities');
+                          await activitiesBox.add(activityCopy);
+                          await recordsBox.addAll(recordCopies);
+                        },
+                      ),
+                    ),
+                  );
+                },
+                background: Container(
+                  color: Colors.red,
+                  alignment: Alignment.centerRight,
+                  padding: const EdgeInsets.only(right: 20),
+                  child: const Icon(
+                    Icons.delete,
+                    color: Colors.white,
+                  ),
+                ),
+                child: ListTile(
+                  title: Text(activity.name),
+                  subtitle: Text('目標: ${activity.targetCount} 回'),
+                  onTap: () {
                   // 最後に記録されたメモを探す
                   final recordsBox = Hive.box<Record>('records');
                   final activityRecords = recordsBox.values
@@ -114,7 +183,8 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                     ),
                   );
-                },
+                  },
+                ),
               );
             },
           );
