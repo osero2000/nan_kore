@@ -175,8 +175,14 @@ class _HomeScreenState extends State<HomeScreen> {
                 }).toList();
 
                 if (filteredActivities.isEmpty) {
+                  // 登録済みアクティビティが0件の場合と、フィルタ結果が0件の場合でメッセージを出し分ける
+                  if (allActivities.isEmpty) {
+                    return const Center(
+                      child: Text('右下の＋ボタンから、最初のアクティビティを登録してみよう！💪✨'),
+                    );
+                  }
                   return const Center(
-                    child: Text('該当するアクティビティがありません👀'),
+                    child: Text('条件に合うアクティビティが見つからないみたい…🤔'),
                   );
                 }
                 return ListView.builder(
