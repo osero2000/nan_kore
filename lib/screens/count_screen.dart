@@ -57,13 +57,13 @@ class _CountScreenState extends State<CountScreen> {
       // `notListening` は聞き取りが止まった時、`done` はタイムアウトなどで完全に終了した時に呼ばれる
       if ((status == 'notListening' || status == 'done') && mounted) {
         final wasListening = _isListening;
-        if (wasListening) {
-          setState(() => _isListening = false);
-        }
-        // タイマーによる再起動リクエストがあれば、リスニングを再開する
+        // 再起動が予定されている場合は、UIを「停止」状態にせず、すぐに再開する
         if (_shouldRestart && wasListening) {
           _shouldRestart = false;
           _startListening();
+        } else if (wasListening) {
+          // ユーザーによる手動停止など、予期せぬ停止の場合のみUIを更新
+          setState(() => _isListening = false);
         }
       }
     });
@@ -79,17 +79,19 @@ class _CountScreenState extends State<CountScreen> {
     await _speech.listen(
       onResult: (result) {
         final recognized = result.recognizedWords;
-
-        // 登録された各コマンドが、認識された文字列の中に何回出現するかを数える
-        final recognizedLower = recognized.toLowerCase();
+        
+        // 認識された言葉を小文字に変換して、コマンドで区切ることで数を数える
+        var tempText = recognized.toLowerCase();
         final lowerCaseCommands =
             widget.activity.voiceCommands.map((c) => c.toLowerCase());
 
         int currentCommandCount = 0;
         for (final command in lowerCaseCommands) {
           if (command.isEmpty) continue;
-          // RegExpを使って、単語の出現回数を数える（はいはいはい、のように連続する場合に対応）
-          currentCommandCount += RegExp(command).allMatches(recognizedLower).length;
+          // コマンドで文字列を分割し、その数-1がコマンドの出現回数になる
+          currentCommandCount += tempText.split(command).length - 1;
+          // カウントした部分はもう数えないように、適当な文字で埋める
+          tempText = tempText.replaceAll(command, ' ');
         }
 
         int diff = 0;
@@ -107,21 +109,20 @@ class _CountScreenState extends State<CountScreen> {
               _currentCount += diff;
             }
           });
-          // 3秒後に認識したテキストをクリアしてセッションをリセットするタイマーを開始
-          _clearTextTimer = Timer(const Duration(seconds: 3), () {
-            if (_isListening && mounted) {
-              // リスニングを再起動して、認識セッションをリセットする
-              _shouldRestart = true;
-              _speech.stop();
-            }
-          });
         }
 
         // 最後に認識したコマンド数を更新
         if (mounted) _lastCommandCount = currentCommandCount;
+
+        // 2単語以上認識したら、セッションをリフレッシュして精度を保つ
+        if (currentCommandCount >= 2 && _isListening && mounted) {
+          _shouldRestart = true;
+          _speech.stop();
+        }
       },
       localeId: 'ja_JP',
       listenMode: stt.ListenMode.dictation, // 連続して聞き取るためのモード
+      partialResults: true, // 途中結果も取得する
     );
     if (mounted) {
       setState(() {
