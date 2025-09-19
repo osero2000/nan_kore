@@ -1,34 +1,38 @@
 import 'package:hive/hive.dart';
+import 'package:nan_kore/models/tag.dart';
 import 'package:uuid/uuid.dart';
-import 'tag.dart'; // さっき作ったTagをインポート
 
 part 'activity.g.dart';
 
 @HiveType(typeId: 1)
 class Activity extends HiveObject {
   @HiveField(0)
-  late String id;
-
-  @HiveField(1)
   String name;
 
-  @HiveField(2)
+  @HiveField(1)
   int targetCount;
 
+  @HiveField(2)
+  HiveList<Tag> tags;
+
   @HiveField(3)
-  HiveList<Tag> tags; // タグをリストで持てるようにする！
+  DateTime createdAt;
 
   @HiveField(4)
   bool notificationEnabled;
 
   @HiveField(5)
-  List<int> notificationDays; // 月曜=1, 火曜=2...みたいに数字で曜日を保存
+  List<int> notificationDays;
 
   @HiveField(6)
-  String notificationTime; // "21:00" みたいな文字列で時間を保存
+  String? notificationTime;
 
+  // これを追加！👇
   @HiveField(7)
-  DateTime createdAt;
+  List<String> voiceCommands;
+
+  @HiveField(100)
+  String id;
 
   Activity({
     required this.name,
@@ -36,8 +40,8 @@ class Activity extends HiveObject {
     required this.tags,
     this.notificationEnabled = false,
     this.notificationDays = const [],
-    this.notificationTime = '09:00',
-  }) : createdAt = DateTime.now() {
-    id = const Uuid().v4();
-  }
+    this.notificationTime,
+    this.voiceCommands = const [], // これも追加！
+  })  : id = const Uuid().v4(),
+        createdAt = DateTime.now();
 }

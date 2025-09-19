@@ -168,6 +168,16 @@ class _HomeScreenState extends State<HomeScreen> {
                       ],
                     ],
                   ),
+                  trailing: IconButton(
+                    icon: const Icon(Icons.edit),
+                    onPressed: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (ctx) => ActivityEditScreen(activity: activity),
+                        ),
+                      );
+                    },
+                  ),
                   onTap: () {
                   // 最後に記録されたメモを探す
                   final recordsBox = Hive.box<Record>('records');

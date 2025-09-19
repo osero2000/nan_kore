@@ -4,7 +4,9 @@ import 'package:nan_kore/models/activity.dart';
 import 'package:nan_kore/models/tag.dart';
 
 class ActivityEditScreen extends StatefulWidget {
-  const ActivityEditScreen({super.key});
+  final Activity? activity;
+
+  const ActivityEditScreen({super.key, this.activity});
 
   @override
   State<ActivityEditScreen> createState() => _ActivityEditScreenState();
@@ -12,10 +14,31 @@ class ActivityEditScreen extends StatefulWidget {
 
 class _ActivityEditScreenState extends State<ActivityEditScreen> {
   final _formKey = GlobalKey<FormState>();
-  String _name = '';
-  int _targetCount = 10;
+  late final TextEditingController _nameController;
+  late final TextEditingController _targetCountController;
+  late final TextEditingController _voiceCommandsController;
   final List<Tag> _selectedTags = [];
   final _newTagController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    final activity = widget.activity;
+    if (activity != null) {
+      // 編集モード
+      _nameController = TextEditingController(text: activity.name);
+      _targetCountController =
+          TextEditingController(text: activity.targetCount.toString());
+      _voiceCommandsController =
+          TextEditingController(text: activity.voiceCommands.join(', '));
+      _selectedTags.addAll(activity.tags);
+    } else {
+      // 新規作成モード
+      _nameController = TextEditingController();
+      _targetCountController = TextEditingController(text: '10');
+      _voiceCommandsController = TextEditingController();
+    }
+  }
 
   void _addNewTag() {
     final tagName = _newTagController.text.trim();
@@ -49,17 +72,36 @@ class _ActivityEditScreenState extends State<ActivityEditScreen> {
     }
     _formKey.currentState!.save();
 
-    final activitiesBox = Hive.box<Activity>('activities');
-    final tagsBox = Hive.box<Tag>('tags');
-    final activityTags = HiveList<Tag>(tagsBox);
-    activityTags.addAll(_selectedTags);
+    final commandList = _voiceCommandsController.text
+        .split(',')
+        .map((e) => e.trim())
+        .where((e) => e.isNotEmpty)
+        .toList();
 
-    final newActivity = Activity(
-      name: _name,
-      targetCount: _targetCount,
-      tags: activityTags,
-    );
-    await activitiesBox.add(newActivity);
+    if (widget.activity != null) {
+      // 更新
+      final activityToUpdate = widget.activity!;
+      activityToUpdate.name = _nameController.text;
+      activityToUpdate.targetCount = int.parse(_targetCountController.text);
+      activityToUpdate.voiceCommands = commandList;
+      activityToUpdate.tags.clear();
+      activityToUpdate.tags.addAll(_selectedTags);
+      await activityToUpdate.save();
+    } else {
+      // 新規作成
+      final activitiesBox = Hive.box<Activity>('activities');
+      final tagsBox = Hive.box<Tag>('tags');
+      final activityTags = HiveList<Tag>(tagsBox);
+      activityTags.addAll(_selectedTags);
+
+      final newActivity = Activity(
+        name: _nameController.text,
+        targetCount: int.parse(_targetCountController.text),
+        tags: activityTags,
+        voiceCommands: commandList,
+      );
+      await activitiesBox.add(newActivity);
+    }
 
     if (!mounted) return;
     Navigator.of(context).pop();
@@ -67,6 +109,9 @@ class _ActivityEditScreenState extends State<ActivityEditScreen> {
 
   @override
   void dispose() {
+    _nameController.dispose();
+    _targetCountController.dispose();
+    _voiceCommandsController.dispose();
     _newTagController.dispose();
     super.dispose();
   }
@@ -75,7 +120,8 @@ class _ActivityEditScreenState extends State<ActivityEditScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('アクティビティの追加'),
+        title:
+            Text(widget.activity == null ? 'アクティビティの追加' : 'アクティビティの編集'),
         actions: [
           IconButton(
             icon: const Icon(Icons.save),
@@ -92,6 +138,7 @@ class _ActivityEditScreenState extends State<ActivityEditScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 TextFormField(
+                  controller: _nameController,
                   decoration: const InputDecoration(labelText: 'アクティビティ名'),
                   textInputAction: TextInputAction.next,
                   validator: (value) {
@@ -100,14 +147,11 @@ class _ActivityEditScreenState extends State<ActivityEditScreen> {
                     }
                     return null;
                   },
-                  onSaved: (value) {
-                    _name = value!;
-                  },
                 ),
                 TextFormField(
+                  controller: _targetCountController,
                   decoration: const InputDecoration(labelText: '目標回数'),
                   keyboardType: TextInputType.number,
-                  initialValue: _targetCount.toString(),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
                       return '目標回数を入力してください';
@@ -117,9 +161,14 @@ class _ActivityEditScreenState extends State<ActivityEditScreen> {
                     }
                     return null;
                   },
-                  onSaved: (value) {
-                    _targetCount = int.parse(value!);
-                  },
+                ),
+                const SizedBox(height: 16),
+                TextFormField(
+                  controller: _voiceCommandsController,
+                  decoration: const InputDecoration(
+                    labelText: '音声コマンド',
+                    hintText: '「プラス,追加,いっこ」のようにカンマ区切りで入力',
+                  ),
                 ),
                 const SizedBox(height: 24),
                 Text('タグ', style: Theme.of(context).textTheme.titleLarge),
