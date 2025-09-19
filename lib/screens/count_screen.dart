@@ -30,6 +30,9 @@ class _CountScreenState extends State<CountScreen> {
   String _lastWords = '';
   // 連続カウントのために、最後に認識したコマンドの数を覚えておく
   int _lastCommandCount = 0;
+  Timer? _refreshTimer;
+  bool _shouldRestart = false;
+  Timer? _clearTextTimer;
 
   @override
   void initState() {
@@ -39,6 +42,9 @@ class _CountScreenState extends State<CountScreen> {
 
   @override
   void dispose() {
+    _shouldRestart = false;
+    _refreshTimer?.cancel(); // タイマーをキャンセル
+    _clearTextTimer?.cancel(); // テキストクリア用のタイマーもキャンセル
     _speech.stop();
     super.dispose();
   }
@@ -48,8 +54,14 @@ class _CountScreenState extends State<CountScreen> {
     await _speech.initialize(onStatus: (status) {
       // `notListening` は聞き取りが止まった時、`done` はタイムアウトなどで完全に終了した時に呼ばれる
       if ((status == 'notListening' || status == 'done') && mounted) {
-        if (_isListening) {
+        final wasListening = _isListening;
+        if (wasListening) {
           setState(() => _isListening = false);
+        }
+        // タイマーによる再起動リクエストがあれば、リスニングを再開する
+        if (_shouldRestart && wasListening) {
+          _shouldRestart = false;
+          _startListening();
         }
       }
     });
@@ -59,22 +71,23 @@ class _CountScreenState extends State<CountScreen> {
   }
 
   void _startListening() async {
+    _refreshTimer?.cancel(); // 念のため既存のタイマーをキャンセル
+    _clearTextTimer?.cancel();
     _lastCommandCount = 0; // 聞き取り開始時にリセット
     await _speech.listen(
       onResult: (result) {
         final recognized = result.recognizedWords;
 
-        // 認識された言葉を小文字に変換してスペースで区切る
-        final words = recognized.toLowerCase().split(' ');
-        // 登録コマンドも小文字に変換してSetにすると効率的
+        // 登録された各コマンドが、認識された文字列の中に何回出現するかを数える
+        final recognizedLower = recognized.toLowerCase();
         final lowerCaseCommands =
-            widget.activity.voiceCommands.map((c) => c.toLowerCase()).toSet();
+            widget.activity.voiceCommands.map((c) => c.toLowerCase());
 
         int currentCommandCount = 0;
-        for (final word in words) {
-          if (lowerCaseCommands.contains(word)) {
-            currentCommandCount++;
-          }
+        for (final command in lowerCaseCommands) {
+          if (command.isEmpty) continue;
+          // RegExpを使って、単語の出現回数を数える（はいはいはい、のように連続する場合に対応）
+          currentCommandCount += RegExp(command).allMatches(recognizedLower).length;
         }
 
         int diff = 0;
@@ -85,16 +98,25 @@ class _CountScreenState extends State<CountScreen> {
 
         // 画面を更新
         if (mounted) {
+          _clearTextTimer?.cancel();
           setState(() {
             _lastWords = recognized; // 表示する言葉は元のまま
             if (diff > 0) {
               _currentCount += diff;
             }
           });
+          // 3秒後に認識したテキストをクリアしてセッションをリセットするタイマーを開始
+          _clearTextTimer = Timer(const Duration(seconds: 3), () {
+            if (_isListening && mounted) {
+              // リスニングを再起動して、認識セッションをリセットする
+              _shouldRestart = true;
+              _speech.stop();
+            }
+          });
         }
 
         // 最後に認識したコマンド数を更新
-        _lastCommandCount = currentCommandCount;
+        if (mounted) _lastCommandCount = currentCommandCount;
       },
       localeId: 'ja_JP',
       listenMode: stt.ListenMode.dictation, // 連続して聞き取るためのモード
@@ -105,6 +127,15 @@ class _CountScreenState extends State<CountScreen> {
         _lastWords = ''; // 聞き取り開始時に前の言葉をクリア
       });
     }
+
+    // 10分後にリスニングをリフレッシュするタイマーを開始
+    _refreshTimer = Timer(const Duration(minutes: 10), () {
+      if (_isListening && mounted) {
+        // リスニングを再起動して、認識精度が落ちるのを防ぐ
+        _shouldRestart = true;
+        _speech.stop();
+      }
+    });
   }
 
   void _incrementCount() {
@@ -114,6 +145,9 @@ class _CountScreenState extends State<CountScreen> {
   }
 
   Future<void> _stopListening() async {
+    _shouldRestart = false; // 手動停止なので再起動しない
+    _refreshTimer?.cancel(); // 手動で停止した場合、タイマーもキャンセル
+    _clearTextTimer?.cancel();
     await _speech.stop();
     // ユーザーがボタンを押したことを即座にUIに反映させる！
     if (mounted) {
