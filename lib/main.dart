@@ -5,6 +5,7 @@ import 'package:nan_kore/models/record.dart';
 import 'package:nan_kore/models/tag.dart';
 import 'package:nan_kore/screens/activity_edit_screen.dart';
 import 'package:nan_kore/screens/count_screen.dart';
+import 'package:nan_kore/screens/stats_screen.dart';
 import 'package:intl/date_symbol_data_local.dart';
 
 // カタカナをひらがなに変換するヘルパー関数
@@ -94,6 +95,15 @@ class _HomeScreenState extends State<HomeScreen> {
       appBar: AppBar(
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
         title: const Text('ダッシュボード'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.bar_chart),
+            onPressed: () {
+              Navigator.of(context)
+                  .push(MaterialPageRoute(builder: (ctx) => const StatsScreen()));
+            },
+          ),
+        ],
       ),
       body: Column(
         children: [

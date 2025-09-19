@@ -44,6 +44,9 @@ dependencies:
   # 状態管理＆テーマ切り替え
   provider: ^6.1.2
 
+  # グラフ表示
+  fl_chart: ^0.68.0
+
   # 音声認識
   speech_to_text: ^6.6.2
 
