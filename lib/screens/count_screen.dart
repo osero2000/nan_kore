@@ -47,7 +47,7 @@ class _CountScreenState extends State<CountScreen> {
     _shouldRestart = false;
     _refreshTimer?.cancel(); // タイマーをキャンセル
     _clearTextTimer?.cancel(); // テキストクリア用のタイマーもキャンセル
-    _speech.stop();
+    _speech.cancel();
     super.dispose();
   }
 
