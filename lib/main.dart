@@ -6,6 +6,8 @@ import 'package:nan_kore/models/tag.dart';
 import 'package:nan_kore/screens/activity_edit_screen.dart';
 import 'package:nan_kore/screens/count_screen.dart';
 import 'package:nan_kore/screens/stats_screen.dart';
+import 'package:nan_kore/widgets/app_background.dart';
+import 'package:nan_kore/widgets/glass_card.dart';
 import 'package:intl/date_symbol_data_local.dart';
 
 // カタカナをひらがなに変換するヘルパー関数
@@ -52,7 +54,16 @@ class MyApp extends StatelessWidget {
       title: 'なんでもカウンター',
       debugShowCheckedModeBanner: false, // これで右上の"DEBUG"が消えるよん！
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.pinkAccent),
+        brightness: Brightness.light, // 明るいテーマでかわいい雰囲気に！
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: Colors.lightBlue, // 白っぽい水色をベースに
+          brightness: Brightness.light,
+        ),
+        scaffoldBackgroundColor: Colors.transparent, // Scaffoldを透明にして背景が見えるように
+        appBarTheme: const AppBarTheme(
+          backgroundColor: Colors.transparent, // AppBarも透明に
+          elevation: 0,
+        ),
         useMaterial3: true,
       ),
       home: const HomeScreen(),
@@ -91,287 +102,319 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        title: const Text('ダッシュボード'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.bar_chart),
-            onPressed: () {
-              Navigator.of(context)
-                  .push(MaterialPageRoute(builder: (ctx) => const StatsScreen()));
-            },
-          ),
-        ],
-      ),
-      body: Column(
-        children: [
-          // 検索とフィルタリングのUI
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Column(
-              children: [
-                TextField(
+    return AppBackground(
+      // 全体にグラデーション背景を適用
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text('ダッシュボード'),
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.bar_chart),
+              onPressed: () {
+                Navigator.of(context).push(
+                    MaterialPageRoute(builder: (ctx) => const StatsScreen()));
+              },
+            ),
+          ],
+        ),
+        body: Column(
+          children: [
+            // 検索とフィルタリングのUI
+            GlassCard(
+              margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+              child: Column(
+                children: [
+                  TextField(
                   controller: _searchController,
                   decoration: InputDecoration(
                     labelText: 'アクティビティ名で検索',
                     prefixIcon: const Icon(Icons.search),
-                    suffixIcon: _searchQuery.isNotEmpty
-                        ? IconButton(
-                            icon: const Icon(Icons.clear),
-                            onPressed: () {
-                              _searchController.clear();
-                            },
-                          )
-                        : null,
+                    suffixIcon: _searchQuery.isNotEmpty ? IconButton(
+                      icon: const Icon(Icons.clear),
+                      onPressed: () {
+                        _searchController.clear();
+                      },
+                    ) : null,
+                    border: InputBorder.none, // GlassCardに馴染むように枠線を消す
                   ),
-                ),
-                const SizedBox(height: 8),
-                ValueListenableBuilder<Box<Tag>>(
-                  valueListenable: Hive.box<Tag>('tags').listenable(),
-                  builder: (context, box, _) {
-                    final allTags = box.values.toList();
-                    if (allTags.isEmpty) {
-                      return const SizedBox.shrink();
-                    }
-                    return Wrap(
-                      spacing: 8.0,
-                      children: allTags.map((tag) {
-                        final isSelected = _selectedFilterTags
-                            .any((selected) => selected.key == tag.key);
-                        return FilterChip(
-                          label: Text(tag.name),
-                          selected: isSelected,
-                          onSelected: (selected) {
-                            setState(() {
-                              if (selected) {
-                                _selectedFilterTags.add(tag);
-                              } else {
-                                _selectedFilterTags.removeWhere(
-                                    (t) => t.key == tag.key);
-                              }
-                            });
-                          },
-                        );
-                      }).toList(),
-                    );
-                  },
-                ),
-              ],
+                  ),
+                  const SizedBox(height: 8),
+                  ValueListenableBuilder<Box<Tag>>(
+                    valueListenable: Hive.box<Tag>('tags').listenable(),
+                    builder: (context, box, _) {
+                      final allTags = box.values.toList();
+                      if (allTags.isEmpty) {
+                        return const SizedBox.shrink();
+                      }
+                      return Wrap(
+                        spacing: 8.0,
+                        children: allTags.map((tag) {
+                          final isSelected = _selectedFilterTags.any(
+                              (selected) => selected.key == tag.key);
+                          return FilterChip(
+                            label: Text(tag.name),
+                            selected: isSelected,
+                            onSelected: (selected) {
+                              setState(() {
+                                if (selected) {
+                                  _selectedFilterTags.add(tag);
+                                } else {
+                                  _selectedFilterTags
+                                      .removeWhere((t) => t.key == tag.key);
+                                }
+                              });
+                            },
+                          );
+                        }).toList(),
+                      );
+                    },
+                  ),
+                ],
+              ),
             ),
-          ),
-          const Divider(),
-          // アクティビティリスト
-          Expanded(
-            child: ValueListenableBuilder<Box<Activity>>(
-              valueListenable: Hive.box<Activity>('activities').listenable(),
-              builder: (context, box, _) {
-                final allActivities = box.values.toList().cast<Activity>();
+            // アクティビティリスト
+            Expanded(
+              child: ValueListenableBuilder<Box<Activity>>(
+                valueListenable: Hive.box<Activity>('activities').listenable(),
+                builder: (context, box, _) {
+                  final allActivities = box.values.toList().cast<Activity>();
 
-                // フィルタリングロジック
-                final filteredActivities = allActivities.where((activity) {
-                  // 1. 名前での検索
-                  final hiraganaQuery = _toHiragana(_searchQuery.toLowerCase());
-                  final hiraganaActivityName = _toHiragana(activity.name.toLowerCase());
-                  final nameMatch = hiraganaActivityName.contains(hiraganaQuery);
+                  // フィルタリングロジック
+                  final filteredActivities = allActivities.where((activity) {
+                    // 1. 名前での検索
+                    final hiraganaQuery =
+                        _toHiragana(_searchQuery.toLowerCase());
+                    final hiraganaActivityName =
+                        _toHiragana(activity.name.toLowerCase());
+                    final nameMatch =
+                        hiraganaActivityName.contains(hiraganaQuery);
 
-                  // 2. タグでの絞り込み
-                  final tagMatch = _selectedFilterTags.isEmpty ||
-                      _selectedFilterTags.every((filterTag) => activity.tags
-                          .any((activityTag) => activityTag.key == filterTag.key));
+                    // 2. タグでの絞り込み
+                    final tagMatch = _selectedFilterTags.isEmpty ||
+                        _selectedFilterTags.every((filterTag) => activity.tags
+                            .any((activityTag) =>
+                                activityTag.key == filterTag.key));
 
-                  return nameMatch && tagMatch;
-                }).toList();
+                    return nameMatch && tagMatch;
+                  }).toList();
 
-                if (filteredActivities.isEmpty) {
-                  // 登録済みアクティビティが0件の場合と、フィルタ結果が0件の場合でメッセージを出し分ける
-                  if (allActivities.isEmpty) {
+                  if (filteredActivities.isEmpty) {
+                    // 登録済みアクティビティが0件の場合と、フィルタ結果が0件の場合でメッセージを出し分ける
+                    if (allActivities.isEmpty) {
+                      return const Center(
+                        child: Text(
+                            '右下の＋ボタンから、最初のアクティビティを登録してみよう！💪✨'),
+                      );
+                    }
                     return const Center(
-                      child: Text('右下の＋ボタンから、最初のアクティビティを登録してみよう！💪✨'),
+                      child: Text('条件に合うアクティビティが見つからないみたい…🤔'),
                     );
                   }
-                  return const Center(
-                    child: Text('条件に合うアクティビティが見つからないみたい…🤔'),
-                  );
-                }
-                return ListView.builder(
-                  itemCount: filteredActivities.length,
-                  itemBuilder: (ctx, index) {
-                    final activity = filteredActivities[index];
-                    return Dismissible(
-                      key: ValueKey(activity.key), // それぞれの項目を区別するための鍵！
-                      direction:
-                          DismissDirection.endToStart, // 右から左へのスワイプだけ許可
-                      onDismissed: (direction) async {
-                        // 0. 削除するデータをコピーして一時的に保存
-                        final activityToDelete = activity;
-                        final activityName = activityToDelete.name;
+                  return ListView.builder(
+                    padding: const EdgeInsets.only(bottom: 90), // FABと被らないように
+                    itemCount: filteredActivities.length,
+                    itemBuilder: (ctx, index) {
+                      final activity = filteredActivities[index];
+                      return Dismissible(
+                        key: ValueKey(activity.key), // それぞれの項目を区別するための鍵！
+                        direction: DismissDirection
+                            .endToStart, // 右から左へのスワイプだけ許可
+                        onDismissed: (direction) async {
+                          // 0. 削除するデータをコピーして一時的に保存
+                          final activityToDelete = activity;
+                          final activityName = activityToDelete.name;
 
-                        // Activityのコピーを作成
-                        final tagsBox = Hive.box<Tag>('tags');
-                        final tagsCopy = HiveList<Tag>(tagsBox)
-                          ..addAll(activityToDelete.tags);
-                        final activityCopy = Activity(
-                          name: activityToDelete.name,
-                          targetCount: activityToDelete.targetCount,
-                          tags: tagsCopy,
-                          voiceCommands: List<String>.from(activityToDelete.voiceCommands),
-                          notificationEnabled:
-                              activityToDelete.notificationEnabled,
-                          notificationDays:
-                              List<int>.from(activityToDelete.notificationDays),
-                          notificationTime: activityToDelete.notificationTime,
-                        )
-                          ..id = activityToDelete.id
-                          ..createdAt = activityToDelete.createdAt;
+                          // Activityのコピーを作成
+                          final tagsBox = Hive.box<Tag>('tags');
+                          final tagsCopy = HiveList<Tag>(tagsBox)
+                            ..addAll(activityToDelete.tags);
+                          final activityCopy = Activity(
+                            name: activityToDelete.name,
+                            targetCount: activityToDelete.targetCount,
+                            tags: tagsCopy,
+                            voiceCommands: List<String>.from(
+                                activityToDelete.voiceCommands),
+                            notificationEnabled:
+                                activityToDelete.notificationEnabled,
+                            notificationDays: List<int>.from(
+                                activityToDelete.notificationDays),
+                            notificationTime: activityToDelete.notificationTime,
+                          )
+                            ..id = activityToDelete.id
+                            ..createdAt = activityToDelete.createdAt;
 
-                        // 関連レコードのコピーを作成
-                        final recordsBox = Hive.box<Record>('records');
-                        final relatedRecords = recordsBox.values
-                            .where(
-                                (record) => record.activityId == activityToDelete.id)
-                            .toList();
-                        final recordCopies = relatedRecords
-                            .map((rec) => Record(
-                                  activityId: rec.activityId,
-                                  count: rec.count,
-                                  memo: rec.memo,
-                                  reaction: rec.reaction,
-                                )
-                                  ..id = rec.id
-                                  ..date = rec.date)
-                            .toList();
-
-                        // 1. データを削除
-                        final recordKeysToDelete =
-                            relatedRecords.map((rec) => rec.key as int).toList();
-                        await recordsBox.deleteAll(recordKeysToDelete);
-                        await activityToDelete.delete();
-
-                        // 2. 元に戻すオプション付きのSnackBarを表示
-                        if (!mounted) return;
-                        ScaffoldMessenger.of(context).removeCurrentSnackBar();
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text('$activityName を削除しました'),
-                            duration: const Duration(seconds: 4),
-                            action: SnackBarAction(
-                              label: '元に戻す',
-                              onPressed: () async {
-                                // データを復元
-                                final activitiesBox =
-                                    Hive.box<Activity>('activities');
-                                await activitiesBox.add(activityCopy);
-                                await recordsBox.addAll(recordCopies);
-                              },
-                            ),
-                          ),
-                        );
-                      },
-                      background: Container(
-                        color: Colors.red,
-                        alignment: Alignment.centerRight,
-                        padding: const EdgeInsets.only(right: 20),
-                        child: const Icon(
-                          Icons.delete,
-                          color: Colors.white,
-                        ),
-                      ),
-                      child: ListTile(
-                        title: Text(activity.name),
-                        subtitle: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text('目標: ${activity.targetCount} 回'),
-                            if (activity.tags.isNotEmpty) ...[
-                              const SizedBox(height: 4),
-                              Wrap(
-                                spacing: 6.0,
-                                runSpacing: 4.0,
-                                children: activity.tags.map((tag) {
-                                  return Chip(
-                                    label: Text(tag.name,
-                                        style: const TextStyle(fontSize: 12)),
-                                    backgroundColor:
-                                        Color(tag.colorValue).withOpacity(0.2),
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: 4.0),
-                                    materialTapTargetSize:
-                                        MaterialTapTargetSize.shrinkWrap,
-                                  );
-                                }).toList(),
-                              ),
-                            ],
-                          ],
-                        ),
-                        trailing: IconButton(
-                          icon: const Icon(Icons.edit),
-                          onPressed: () {
-                            Navigator.of(context).push(
-                              MaterialPageRoute(
-                                builder: (ctx) =>
-                                    ActivityEditScreen(activity: activity),
-                              ),
-                            );
-                          },
-                        ),
-                        onTap: () {
-                          // 最後に記録されたメモを探す
+                          // 関連レコードのコピーを作成
                           final recordsBox = Hive.box<Record>('records');
-                          final activityRecords = recordsBox.values
-                              .where((record) => record.activityId == activity.id)
+                          final relatedRecords = recordsBox.values
+                              .where((record) =>
+                                  record.activityId == activityToDelete.id)
                               .toList();
-                          activityRecords.sort(
-                              (a, b) => b.date.compareTo(a.date)); // 新しい順に並び替え
+                          final recordCopies = relatedRecords
+                              .map((rec) => Record(
+                                    activityId: rec.activityId,
+                                    count: rec.count,
+                                    memo: rec.memo,
+                                    reaction: rec.reaction,
+                                  )
+                                    ..id = rec.id
+                                    ..date = rec.date)
+                              .toList();
 
-                          int? lastCount;
-                          DateTime? lastDate;
-                          if (activityRecords.isNotEmpty) {
-                            // 一番新しい記録がリストの最初に来る
-                            lastCount = activityRecords.first.count;
-                            lastDate = activityRecords.first.date;
-                          }
+                          // 1. データを削除
+                          final recordKeysToDelete = relatedRecords
+                              .map((rec) => rec.key as int)
+                              .toList();
+                          await recordsBox.deleteAll(recordKeysToDelete);
+                          await activityToDelete.delete();
 
-                          String? lastMemo;
-                          // 空じゃないメモが見つかるまで探す！
-                          for (final record in activityRecords) {
-                            if (record.memo != null && record.memo!.isNotEmpty) {
-                              lastMemo = record.memo;
-                              break;
-                            }
-                          }
-
-                          Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (ctx) => CountScreen(
-                                activity: activity,
-                                lastCount: lastCount,
-                                lastDate: lastDate,
-                                lastMemo: lastMemo,
+                          // 2. 元に戻すオプション付きのSnackBarを表示
+                          if (!mounted) return;
+                          ScaffoldMessenger.of(context).removeCurrentSnackBar();
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('$activityName を削除しました'),
+                              duration: const Duration(seconds: 4),
+                              action: SnackBarAction(
+                                label: '元に戻す',
+                                onPressed: () async {
+                                  // データを復元
+                                  final activitiesBox =
+                                      Hive.box<Activity>('activities');
+                                  await activitiesBox.add(activityCopy);
+                                  await recordsBox.addAll(recordCopies);
+                                },
                               ),
                             ),
                           );
                         },
-                      ),
-                    );
-                  },
-                );
-              },
+                        background: Container(
+                          margin: const EdgeInsets.symmetric(
+                              horizontal: 16, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: Colors.red.withOpacity(0.8),
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          alignment: Alignment.centerRight,
+                          padding: const EdgeInsets.only(right: 20),
+                          child: const Icon(
+                            Icons.delete,
+                            color: Colors.white,
+                          ),
+                        ),
+                        child: GlassCard(
+                          onTap: () {
+                            // 最後に記録されたメモを探す
+                            final recordsBox = Hive.box<Record>('records');
+                            final activityRecords = recordsBox.values
+                                .where((record) =>
+                                    record.activityId == activity.id)
+                                .toList();
+                            activityRecords.sort((a, b) => b.date
+                                .compareTo(a.date)); // 新しい順に並び替え
+
+                            int? lastCount;
+                            DateTime? lastDate;
+                            if (activityRecords.isNotEmpty) {
+                              // 一番新しい記録がリストの最初に来る
+                              lastCount = activityRecords.first.count;
+                              lastDate = activityRecords.first.date;
+                            }
+
+                            String? lastMemo;
+                            // 空じゃないメモが見つかるまで探す！
+                            for (final record in activityRecords) {
+                              if (record.memo != null &&
+                                  record.memo!.isNotEmpty) {
+                                lastMemo = record.memo;
+                                break;
+                              }
+                            }
+
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (ctx) => CountScreen(
+                                  activity: activity,
+                                  lastCount: lastCount,
+                                  lastDate: lastDate,
+                                  lastMemo: lastMemo,
+                                ),
+                              ),
+                            );
+                          },
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(activity.name,
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .titleLarge),
+                                    Text(
+                                        '目標: ${activity.targetCount} 回',
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .bodyMedium
+                                            ?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant)),
+                                    if (activity.tags.isNotEmpty) ...[
+                                      const SizedBox(height: 8),
+                                      Wrap(
+                                        spacing: 6.0,
+                                        runSpacing: 4.0,
+                                        children: activity.tags.map((tag) {
+                                          return Chip(
+                                            label: Text(tag.name,
+                                                style: const TextStyle(
+                                                    fontSize: 12)),
+                                            backgroundColor:
+                                                Color(tag.colorValue).withOpacity(0.2),
+                                            padding:
+                                                const EdgeInsets.symmetric(
+                                                    horizontal: 4.0),
+                                            materialTapTargetSize:
+                                                MaterialTapTargetSize
+                                                    .shrinkWrap,
+                                          );
+                                        }).toList(),
+                                      ),
+                                    ],
+                                  ],
+                                ),
+                              ),
+                              IconButton(
+                                icon: const Icon(Icons.edit),
+                                onPressed: () {
+                                  Navigator.of(context).push(
+                                    MaterialPageRoute(
+                                      builder: (ctx) => ActivityEditScreen(
+                                          activity: activity),
+                                    ),
+                                  );
+                                },
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
+                  );
+                },
+              ),
             ),
-          ),
-        ],
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          Navigator.of(context).push(
-            MaterialPageRoute(
-              builder: (ctx) => const ActivityEditScreen(),
-            ),
-          );
-        },
-        tooltip: 'アクティビティを追加',
-        child: const Icon(Icons.add),
+          ],
+        ),
+        floatingActionButton: FloatingActionButton(
+          onPressed: () {
+            Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (ctx) => const ActivityEditScreen(),
+              ),
+            );
+          },
+          tooltip: 'アクティビティを追加',
+          child: const Icon(Icons.add),
+        ),
       ),
     );
   }

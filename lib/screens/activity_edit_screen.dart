@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:nan_kore/models/activity.dart';
 import 'package:nan_kore/models/tag.dart';
+import 'package:nan_kore/widgets/app_background.dart';
+import 'package:nan_kore/widgets/glass_card.dart';
 
 class ActivityEditScreen extends StatefulWidget {
   final Activity? activity;
@@ -118,110 +120,115 @@ class _ActivityEditScreenState extends State<ActivityEditScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title:
-            Text(widget.activity == null ? 'アクティビティの追加' : 'アクティビティの編集'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.save),
-            onPressed: _saveForm,
-          ),
-        ],
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Form(
-          key: _formKey,
-          child: SingleChildScrollView(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                TextFormField(
-                  controller: _nameController,
-                  decoration: const InputDecoration(labelText: 'アクティビティ名'),
-                  textInputAction: TextInputAction.next,
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return '名前を入力してください';
-                    }
-                    return null;
-                  },
-                ),
-                TextFormField(
-                  controller: _targetCountController,
-                  decoration: const InputDecoration(labelText: '目標回数'),
-                  keyboardType: TextInputType.number,
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return '目標回数を入力してください';
-                    }
-                    if (int.tryParse(value) == null || int.parse(value) <= 0) {
-                      return '1以上の数値を入力してください';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 16),
-                TextFormField(
-                  controller: _voiceCommandsController,
-                  decoration: const InputDecoration(
-                    labelText: '音声コマンド',
-                    hintText: '「プラス,追加,いっこ」のようにカンマ区切りで入力',
+    return AppBackground(
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text(
+              widget.activity == null ? 'アクティビティの追加' : 'アクティビティの編集'),
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.save),
+              onPressed: _saveForm,
+            ),
+          ],
+        ),
+        body: SingleChildScrollView(
+          child: GlassCard(
+            margin: const EdgeInsets.all(16),
+            child: Form(
+              key: _formKey,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  TextFormField(
+                    controller: _nameController,
+                    decoration: const InputDecoration(labelText: 'アクティビティ名'),
+                    textInputAction: TextInputAction.next,
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return '名前を入力してください';
+                      }
+                      return null;
+                    },
                   ),
-                ),
-                const SizedBox(height: 24),
-                Text('タグ', style: Theme.of(context).textTheme.titleLarge),
-                const SizedBox(height: 8),
-                // 新しいタグを追加するUI
-                Row(
-                  children: [
-                    Expanded(
-                      child: TextField(
-                        controller: _newTagController,
-                        decoration: const InputDecoration(labelText: '新しいタグを追加'),
-                        onSubmitted: (_) => _addNewTag(),
+                  TextFormField(
+                    controller: _targetCountController,
+                    decoration: const InputDecoration(labelText: '目標回数'),
+                    keyboardType: TextInputType.number,
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return '目標回数を入力してください';
+                      }
+                      if (int.tryParse(value) == null ||
+                          int.parse(value) <= 0) {
+                        return '1以上の数値を入力してください';
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                  TextFormField(
+                    controller: _voiceCommandsController,
+                    decoration: const InputDecoration(
+                      labelText: '音声コマンド',
+                      hintText: '「プラス,追加,いっこ」のようにカンマ区切りで入力',
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  Text('タグ', style: Theme.of(context).textTheme.titleLarge),
+                  const SizedBox(height: 8),
+                  // 新しいタグを追加するUI
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextField(
+                          controller: _newTagController,
+                          decoration:
+                              const InputDecoration(labelText: '新しいタグを追加'),
+                          onSubmitted: (_) => _addNewTag(),
+                        ),
                       ),
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.add_circle),
-                      onPressed: _addNewTag,
-                      color: Theme.of(context).colorScheme.primary,
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                // 既存のタグを選択するUI
-                ValueListenableBuilder<Box<Tag>>(
-                  valueListenable: Hive.box<Tag>('tags').listenable(),
-                  builder: (context, box, _) {
-                    final allTags = box.values.toList();
-                    if (allTags.isEmpty) {
-                      return const Text('まだタグがありません。');
-                    }
-                    return Wrap(
-                      spacing: 8.0,
-                      children: allTags.map((tag) {
-                        final isSelected =
-                            _selectedTags.any((selected) => selected.key == tag.key);
-                        return FilterChip(
-                          label: Text(tag.name),
-                          selected: isSelected,
-                          onSelected: (selected) {
-                            setState(() {
-                              if (selected) {
-                                _selectedTags.add(tag);
-                              } else {
-                                _selectedTags.removeWhere((t) => t.key == tag.key);
-                              }
-                            });
-                          },
-                        );
-                      }).toList(),
-                    );
-                  },
-                ),
-              ],
+                      IconButton(
+                        icon: const Icon(Icons.add_circle),
+                        onPressed: _addNewTag,
+                        color: Theme.of(context).colorScheme.primary,
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  // 既存のタグを選択するUI
+                  ValueListenableBuilder<Box<Tag>>(
+                    valueListenable: Hive.box<Tag>('tags').listenable(),
+                    builder: (context, box, _) {
+                      final allTags = box.values.toList();
+                      if (allTags.isEmpty) {
+                        return const Text('まだタグがありません。');
+                      }
+                      return Wrap(
+                        spacing: 8.0,
+                        children: allTags.map((tag) {
+                          final isSelected = _selectedTags
+                              .any((selected) => selected.key == tag.key);
+                          return FilterChip(
+                            label: Text(tag.name),
+                            selected: isSelected,
+                            onSelected: (selected) {
+                              setState(() {
+                                if (selected) {
+                                  _selectedTags.add(tag);
+                                } else {
+                                  _selectedTags
+                                      .removeWhere((t) => t.key == tag.key);
+                                }
+                              });
+                            },
+                          );
+                        }).toList(),
+                      );
+                    },
+                  ),
+                ],
+              ),
             ),
           ),
         ),

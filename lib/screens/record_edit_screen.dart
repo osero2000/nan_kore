@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
 import 'package:nan_kore/models/activity.dart';
 import 'package:nan_kore/models/record.dart';
+import 'package:nan_kore/widgets/app_background.dart';
+import 'package:nan_kore/widgets/glass_card.dart';
 
 class RecordEditScreen extends StatefulWidget {
   final Activity activity;
@@ -42,42 +44,47 @@ class _RecordEditScreenState extends State<RecordEditScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('${widget.activity.name} の記録'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.save),
-            onPressed: _saveRecord,
+    return AppBackground(
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text('${widget.activity.name} の記録'),
+        ),
+        body: SingleChildScrollView(
+          child: GlassCard(
+            margin: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'おつかれさま！✨',
+                  style: Theme.of(context).textTheme.headlineMedium,
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  '結果: ${widget.count} 回',
+                  style: Theme.of(context).textTheme.titleLarge,
+                ),
+                const SizedBox(height: 24),
+                TextField(
+                  controller: _memoController,
+                  decoration: const InputDecoration(
+                    labelText: '今日のメモ',
+                    hintText: '今日の感想や、次回の目標などを記録しよう！',
+                    border: OutlineInputBorder(),
+                  ),
+                  maxLines: 5,
+                  textCapitalization: TextCapitalization.sentences,
+                ),
+                const SizedBox(height: 24),
+                SizedBox(
+                  width: double.infinity,
+                  child: FilledButton(
+                      onPressed: _saveRecord,
+                      child: const Text('この内容で記録する')),
+                )
+              ],
+            ),
           ),
-        ],
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'おつかれさま！✨',
-              style: Theme.of(context).textTheme.headlineMedium,
-            ),
-            const SizedBox(height: 16),
-            Text(
-              '結果: ${widget.count} 回',
-              style: Theme.of(context).textTheme.titleLarge,
-            ),
-            const SizedBox(height: 24),
-            TextField(
-              controller: _memoController,
-              decoration: const InputDecoration(
-                labelText: '今日のメモ',
-                hintText: '今日の感想や、次回の目標などを記録しよう！',
-                border: OutlineInputBorder(),
-              ),
-              maxLines: 5,
-              textCapitalization: TextCapitalization.sentences,
-            ),
-          ],
         ),
       ),
     );

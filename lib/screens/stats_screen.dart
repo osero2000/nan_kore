@@ -4,6 +4,8 @@ import 'package:hive_flutter/hive_flutter.dart';
 import 'package:intl/intl.dart';
 import 'package:nan_kore/models/record.dart';
 import 'package:nan_kore/models/activity.dart';
+import 'package:nan_kore/widgets/app_background.dart';
+import 'package:nan_kore/widgets/glass_card.dart';
 
 // グラフの期間を管理するためのenum
 enum StatsPeriod { weekly, monthly, quarterly, yearly }
@@ -408,111 +410,129 @@ class _StatsScreenState extends State<StatsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('アクティビティグラフ'),
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch, // 横幅をいっぱいにする
-          children: [
-            // 期間選択ボタン
-            SegmentedButton<StatsPeriod>(
-              segments: const <ButtonSegment<StatsPeriod>>[
-                ButtonSegment(value: StatsPeriod.weekly, label: Text('週間')),
-                ButtonSegment(value: StatsPeriod.monthly, label: Text('月間')),
-                ButtonSegment(value: StatsPeriod.quarterly, label: Text('3ヶ月')),
-                ButtonSegment(value: StatsPeriod.yearly, label: Text('年間')),
-              ],
-              selected: {_selectedPeriod},
-              onSelectionChanged: (newSelection) {
-                setState(() {
-                  _selectedPeriod = newSelection.first;
-                });
-                _loadChartData();
-              },
-            ),
-            const SizedBox(height: 16),
-            // 計算方法選択ボタン
-            SegmentedButton<StatsCalcType>(
-              segments: const <ButtonSegment<StatsCalcType>>[
-                ButtonSegment(value: StatsCalcType.perDay, label: Text('合計/日あたり')),
-                ButtonSegment(value: StatsCalcType.perSession, label: Text('1回あたり')),
-              ],
-              selected: {_selectedCalcType},
-              onSelectionChanged: (newSelection) {
-                setState(() {
-                  _selectedCalcType = newSelection.first;
-                });
-                _loadChartData();
-              },
-            ),
-            const SizedBox(height: 8),
-            // アクティビティ選択のドロップダウン
-            DropdownButton<Activity?>(
-              value: _selectedActivity,
-              hint: const Text('すべてのアクティビティ'),
-              isExpanded: true,
-              items: [
-                const DropdownMenuItem<Activity?>(
-                  value: null,
-                  child: Text('💪 すべてのアクティビティ'),
-                ),
-                ..._activities.map((activity) {
-                  return DropdownMenuItem<Activity?>(
-                    value: activity,
-                    child: Text(activity.name),
-                  );
-                }).toList(),
-              ],
-              onChanged: (activity) {
-                setState(() {
-                  _selectedActivity = activity;
-                });
-                _loadChartData();
-              },
-            ),
-            const SizedBox(height: 16),
-            Text(
-              '${_getPeriodName()}の${_getChartTitle()}',
-              style: Theme.of(context).textTheme.headlineSmall,
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 24),
-            AspectRatio(
-              aspectRatio: 1.5,
-              child: BarChart(
-                BarChartData(
-                  // タッチした時の挙動を設定
-                  barTouchData: BarTouchData(
-                    touchTooltipData: BarTouchTooltipData(
-                      getTooltipItem: (group, groupIndex, rod, rodIndex) {
-                        return BarTooltipItem(
-                          _getTooltipValue(rod.toY),
-                          const TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
+    return AppBackground(
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text('アクティビティグラフ'),
+        ),
+        body: SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch, // 横幅をいっぱいにする
+              children: [
+                GlassCard(
+                  margin: const EdgeInsets.all(0),
+                  child: Column(
+                    children: [
+                      // 期間選択ボタン
+                      SegmentedButton<StatsPeriod>(
+                        segments: const <ButtonSegment<StatsPeriod>>[
+                          ButtonSegment(value: StatsPeriod.weekly, label: Text('週間')),
+                          ButtonSegment(value: StatsPeriod.monthly, label: Text('月間')),
+                          ButtonSegment(value: StatsPeriod.quarterly, label: Text('3ヶ月')),
+                          ButtonSegment(value: StatsPeriod.yearly, label: Text('年間')),
+                        ],
+                        selected: {_selectedPeriod},
+                        onSelectionChanged: (newSelection) {
+                          setState(() {
+                            _selectedPeriod = newSelection.first;
+                          });
+                          _loadChartData();
+                        },
+                      ),
+                      const SizedBox(height: 16),
+                      // 計算方法選択ボタン
+                      SegmentedButton<StatsCalcType>(
+                        segments: const <ButtonSegment<StatsCalcType>>[
+                          ButtonSegment(value: StatsCalcType.perDay, label: Text('合計/日あたり')),
+                          ButtonSegment(value: StatsCalcType.perSession, label: Text('1回あたり')),
+                        ],
+                        selected: {_selectedCalcType},
+                        onSelectionChanged: (newSelection) {
+                          setState(() {
+                            _selectedCalcType = newSelection.first;
+                          });
+                          _loadChartData();
+                        },
+                      ),
+                      const SizedBox(height: 8),
+                      // アクティビティ選択のドロップダウン
+                      DropdownButton<Activity?>(
+                        value: _selectedActivity,
+                        hint: const Text('すべてのアクティビティ'),
+                        isExpanded: true,
+                        items: [
+                          const DropdownMenuItem<Activity?>(
+                            value: null,
+                            child: Text('💪 すべてのアクティビティ'),
                           ),
-                        );
-                      },
-                    ),
+                          ..._activities.map((activity) {
+                            return DropdownMenuItem<Activity?>(
+                              value: activity,
+                              child: Text(activity.name),
+                            );
+                          }).toList(),
+                        ],
+                        onChanged: (activity) {
+                          setState(() {
+                            _selectedActivity = activity;
+                          });
+                          _loadChartData();
+                        },
+                      ),
+                    ],
                   ),
-                  maxY: _maxY,
-                  barGroups: _chartData,
-                  titlesData: FlTitlesData(
-                    show: true,
-                    bottomTitles: AxisTitles(sideTitles: SideTitles(showTitles: true, getTitlesWidget: getTitles, reservedSize: 38)),
-                    leftTitles: const AxisTitles(sideTitles: SideTitles(showTitles: true, reservedSize: 40)),
-                    topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                    rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                  ),
-                  borderData: FlBorderData(show: false),
-                  gridData: const FlGridData(show: true, drawVerticalLine: false),
                 ),
-              ),
+                const SizedBox(height: 16),
+                GlassCard(
+                  margin: const EdgeInsets.all(0),
+                  child: Column(
+                    children: [
+                      Text(
+                        '${_getPeriodName()}の${_getChartTitle()}',
+                        style: Theme.of(context).textTheme.headlineSmall,
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 24),
+                      AspectRatio(
+                        aspectRatio: 1.5,
+                        child: BarChart(
+                          BarChartData(
+                            // タッチした時の挙動を設定
+                            barTouchData: BarTouchData(
+                              touchTooltipData: BarTouchTooltipData(
+                                getTooltipItem: (group, groupIndex, rod, rodIndex) {
+                                  return BarTooltipItem(
+                                    _getTooltipValue(rod.toY),
+                                    const TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  );
+                                },
+                              ),
+                            ),
+                            maxY: _maxY,
+                            barGroups: _chartData,
+                            titlesData: FlTitlesData(
+                              show: true,
+                              bottomTitles: AxisTitles(sideTitles: SideTitles(showTitles: true, getTitlesWidget: getTitles, reservedSize: 38)),
+                              leftTitles: const AxisTitles(sideTitles: SideTitles(showTitles: true, reservedSize: 40)),
+                              topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                              rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                            ),
+                            borderData: FlBorderData(show: false),
+                            gridData: const FlGridData(show: true, drawVerticalLine: false),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );
