@@ -27,4 +27,23 @@ class Record extends HiveObject {
       {required this.activityId, required this.count, this.memo, this.reaction = 0}) : date = DateTime.now() {
     id = const Uuid().v4();
   }
+
+  Record copyWith({
+    String? id,
+    String? activityId,
+    int? count,
+    String? memo,
+    DateTime? date,
+    int? reaction,
+  }) {
+    final newRecord = Record(
+      activityId: activityId ?? this.activityId,
+      count: count ?? this.count,
+      memo: memo ?? this.memo,
+      reaction: reaction ?? this.reaction,
+    )
+      ..id = id ?? this.id
+      ..date = date ?? this.date;
+    return newRecord;
+  }
 }

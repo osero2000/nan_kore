@@ -109,7 +109,7 @@ class _HomeScreenState extends State<HomeScreen> {
           title: const Text('ダッシュボード'),
           actions: [
             IconButton(
-              icon: const Icon(Icons.bar_chart),
+              icon: const Icon(Icons.bar_chart, size: 40.0), // アイコンサイズを大きくする
               onPressed: () {
                 Navigator.of(context).push(
                     MaterialPageRoute(builder: (ctx) => const StatsScreen()));
@@ -224,40 +224,11 @@ class _HomeScreenState extends State<HomeScreen> {
                           final activityToDelete = activity;
                           final activityName = activityToDelete.name;
 
-                          // Activityのコピーを作成
-                          final tagsBox = Hive.box<Tag>('tags');
-                          final tagsCopy = HiveList<Tag>(tagsBox)
-                            ..addAll(activityToDelete.tags);
-                          final activityCopy = Activity(
-                            name: activityToDelete.name,
-                            targetCount: activityToDelete.targetCount,
-                            tags: tagsCopy,
-                            voiceCommands: List<String>.from(
-                                activityToDelete.voiceCommands),
-                            notificationEnabled:
-                                activityToDelete.notificationEnabled,
-                            notificationDays: List<int>.from(
-                                activityToDelete.notificationDays),
-                            notificationTime: activityToDelete.notificationTime,
-                          )
-                            ..id = activityToDelete.id
-                            ..createdAt = activityToDelete.createdAt;
-
                           // 関連レコードのコピーを作成
                           final recordsBox = Hive.box<Record>('records');
                           final relatedRecords = recordsBox.values
                               .where((record) =>
                                   record.activityId == activityToDelete.id)
-                              .toList();
-                          final recordCopies = relatedRecords
-                              .map((rec) => Record(
-                                    activityId: rec.activityId,
-                                    count: rec.count,
-                                    memo: rec.memo,
-                                    reaction: rec.reaction,
-                                  )
-                                    ..id = rec.id
-                                    ..date = rec.date)
                               .toList();
 
                           // 1. データを削除
@@ -280,8 +251,10 @@ class _HomeScreenState extends State<HomeScreen> {
                                   // データを復元
                                   final activitiesBox =
                                       Hive.box<Activity>('activities');
-                                  await activitiesBox.add(activityCopy);
-                                  await recordsBox.addAll(recordCopies);
+                                  // copyWith を使わない単純な再追加でOK
+                                  // (delete()はオブジェクトをメモリから消すわけではないため)
+                                  await activitiesBox.add(activityToDelete);
+                                  await recordsBox.addAll(relatedRecords);
                                 },
                               ),
                             ),

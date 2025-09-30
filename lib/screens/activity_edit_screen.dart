@@ -114,7 +114,7 @@ class _ActivityEditScreenState extends State<ActivityEditScreen> {
               widget.activity == null ? 'アクティビティの追加' : 'アクティビティの編集'),
           actions: [
             IconButton(
-              icon: const Icon(Icons.save),
+              icon: const Icon(Icons.save, size: 40.0), // アイコンサイズを大きくする
               onPressed: _saveForm,
             ),
           ],

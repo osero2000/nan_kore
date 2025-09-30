@@ -96,7 +96,7 @@ class _CountScreenState extends State<CountScreen> {
               padding: const EdgeInsets.only(right: 8.0),
               child: FilledButton(
                 onPressed: _finishCounting,
-                child: const Text('完了'),
+                child: const Text('完了', style: TextStyle(fontSize: 16)), // 文字を大きくしてボタンを押しやすくする
               ),
             )
           ],
@@ -141,7 +141,7 @@ class _CountScreenState extends State<CountScreen> {
         ),
         floatingActionButton: FloatingActionButton.large(
           onPressed: _incrementCount,
-          child: const Icon(Icons.add),
+          child: const Icon(Icons.add, size: 40.0), // アイコンサイズを大きくする
         ),
         floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
       ),
