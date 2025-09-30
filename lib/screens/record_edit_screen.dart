@@ -72,7 +72,8 @@ class _RecordEditScreenState extends State<RecordEditScreen> {
                     hintText: '今日の感想や、次回の目標などを記録しよう！',
                     border: OutlineInputBorder(),
                   ),
-                  maxLines: 5,
+                  // 2行まで入力できるように変更
+                  maxLines: 2,
                   textCapitalization: TextCapitalization.sentences,
                 ),
                 const SizedBox(height: 24),

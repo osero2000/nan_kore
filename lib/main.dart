@@ -202,12 +202,25 @@ class _HomeScreenState extends State<HomeScreen> {
                     // 登録済みアクティビティが0件の場合と、フィルタ結果が0件の場合でメッセージを出し分ける
                     if (allActivities.isEmpty) {
                       return const Center(
-                        child: Text(
-                            '右下の＋ボタンから、最初のアクティビティを登録してみよう！💪✨'),
+                        child: Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 24.0),
+                          child: Text(
+                            '右下の＋ボタンから、最初のアクティビティを登録してみよう！💪✨',
+                            style: TextStyle(fontSize: 24),
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
                       );
                     }
                     return const Center(
-                      child: Text('条件に合うアクティビティが見つからないみたい…🤔'),
+                      child: Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 24.0),
+                        child: Text(
+                          '条件に合うアクティビティが見つからないみたい…🤔',
+                          style: TextStyle(fontSize: 24),
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
                     );
                   }
                   return ListView.builder(

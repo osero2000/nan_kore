@@ -32,10 +32,6 @@ jobs:
         with:
           channel: 'stable' # 安定版のFlutterを使用
 
-      # ★★★★★ ココを追加！ ★★★★★
-      - name: Generate Hive Adapters
-        run: flutter pub run build_runner build --delete-conflicting-outputs
-
       - name: Build Web App
         run: flutter build web --base-href "/nan_kore/"
 
