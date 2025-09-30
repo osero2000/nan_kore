@@ -31,6 +31,7 @@ class _RecordEditScreenState extends State<RecordEditScreen> {
     );
     await recordsBox.add(newRecord);
 
+    // 非同期処理の後にcontextを使うときは、mountedチェックを入れるのがお作法！
     if (!mounted) return;
     // ホーム画面まで一気に戻る！
     Navigator.of(context).popUntil((route) => route.isFirst);

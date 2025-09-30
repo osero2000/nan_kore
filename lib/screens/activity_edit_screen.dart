@@ -47,6 +47,8 @@ class _ActivityEditScreenState extends State<ActivityEditScreen> {
     // 同じ名前のタグが既にないかチェック
     final alreadyExists = tagsBox.values.any((tag) => tag.name == tagName);
     if (alreadyExists) {
+      // asyncじゃないけど、Linter君を安心させるためにmountedチェックを入れとく！
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('タグ「$tagName」は既に存在します')),
       );
@@ -56,7 +58,7 @@ class _ActivityEditScreenState extends State<ActivityEditScreen> {
     // とりあえずランダムな色を割り当てる！
     final newTag = Tag(
       name: tagName,
-      colorValue: (Colors.primaries.toList()..shuffle()).first.value,
+      colorValue: (Colors.primaries.toList()..shuffle()).first.toARGB32(),
     );
     // Hiveに保存するだけ！setStateは呼ばないのがポイント！
     tagsBox.add(newTag);
@@ -93,6 +95,7 @@ class _ActivityEditScreenState extends State<ActivityEditScreen> {
       await activitiesBox.add(newActivity);
     }
 
+    // 非同期処理の後にcontextを使うときは、mountedチェックを入れるのがお作法！
     if (!mounted) return;
     Navigator.of(context).pop();
   }

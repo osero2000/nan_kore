@@ -251,10 +251,14 @@ class _HomeScreenState extends State<HomeScreen> {
                           await recordsBox.deleteAll(recordKeysToDelete);
                           await activityToDelete.delete();
 
+                          // SnackBarで使うcontextを、非同期処理の前に変数に保存しておくのが安全！
+                          final scaffoldMessenger = ScaffoldMessenger.of(context);
+
                           // 2. 元に戻すオプション付きのSnackBarを表示
+                          // 非同期処理の後にcontextを使うときは、mountedチェックを入れるのがお作法！
                           if (!mounted) return;
-                          ScaffoldMessenger.of(context).removeCurrentSnackBar();
-                          ScaffoldMessenger.of(context).showSnackBar(
+                          scaffoldMessenger.removeCurrentSnackBar();
+                          scaffoldMessenger.showSnackBar(
                             SnackBar(
                               content: Text('$activityName を削除しました'),
                               duration: const Duration(seconds: 4),
@@ -268,6 +272,8 @@ class _HomeScreenState extends State<HomeScreen> {
                                   // (delete()はオブジェクトをメモリから消すわけではないため)
                                   await activitiesBox.add(activityToDelete);
                                   await recordsBox.addAll(relatedRecords);
+                                  // ここではmountedチェックは不要！
+                                  scaffoldMessenger.showSnackBar(SnackBar(content: Text('$activityName を元に戻しました')));
                                 },
                               ),
                             ),
@@ -277,7 +283,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           margin: const EdgeInsets.symmetric(
                               horizontal: 16, vertical: 6),
                           decoration: BoxDecoration(
-                            color: Colors.red.withOpacity(0.8),
+                            color: Colors.red.withAlpha(204),
                             borderRadius: BorderRadius.circular(20),
                           ),
                           alignment: Alignment.centerRight,
@@ -353,8 +359,8 @@ class _HomeScreenState extends State<HomeScreen> {
                                             label: Text(tag.name,
                                                 style: const TextStyle(
                                                     fontSize: 12)),
-                                            backgroundColor:
-                                                Color(tag.colorValue).withOpacity(0.2),
+                                            backgroundColor: Color(tag.colorValue)
+                                                .withAlpha(51),
                                             padding:
                                                 const EdgeInsets.symmetric(
                                                     horizontal: 4.0),

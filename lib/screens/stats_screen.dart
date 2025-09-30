@@ -467,12 +467,13 @@ class _StatsScreenState extends State<StatsScreen> {
                             value: null,
                             child: Text('💪 すべてのアクティビティ'),
                           ),
+                          // スプレッド演算子(...)を使うときは、.toList()は要らないよ！
                           ..._activities.map((activity) {
                             return DropdownMenuItem<Activity?>(
                               value: activity,
                               child: Text(activity.name),
                             );
-                          }).toList(),
+                          }),
                         ],
                         onChanged: (activity) {
                           setState(() {

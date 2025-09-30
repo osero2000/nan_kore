@@ -71,7 +71,8 @@ class _CountScreenState extends State<CountScreen> {
     return GlassCard(
       margin: const EdgeInsets.fromLTRB(16, 16, 16, 0),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        // centerにして、中身のテキストの幅に合わせる
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Text(
             '最後のメモ📝',
@@ -108,8 +109,8 @@ class _CountScreenState extends State<CountScreen> {
             )
           ],
         ),
-        // 再びStackを使うよ！Positionedでメモの位置を固定すれば、
-        // カウント表示は常に画面中央に配置されるし、UIの重なりも防げる！
+        // Columnをやめて、StackとPositionedを使ったレイアウトに戻すよ！
+        // これでカウント表示が常に画面中央に固定される！
         body: Stack(
           children: [
             // カウント表示部分は常に中央に配置

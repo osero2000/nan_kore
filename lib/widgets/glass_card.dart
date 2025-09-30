@@ -1,4 +1,3 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
 
 class GlassCard extends StatelessWidget {
@@ -27,11 +26,11 @@ class GlassCard extends StatelessWidget {
           child: Container(
             padding: padding ?? const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.6), // 透明度を下げて文字を読みやすく
+              color: Colors.white.withAlpha(153), // withOpacity(0.6)と同じ
               borderRadius: BorderRadius.circular(20),
               border: Border.all(
                 width: 1.0,
-                color: Colors.white.withOpacity(0.8),
+                color: Colors.white.withAlpha(204), // withOpacity(0.8)と同じ
               ),
             ),
             child: child,
