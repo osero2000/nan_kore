@@ -32,8 +32,14 @@ jobs:
         with:
           channel: 'stable' # 安定版のFlutterを使用
 
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Generate code
+        run: flutter pub run build_runner build --delete-conflicting-outputs
+
       - name: Build Web App
-        run: flutter build web --base-href "/nan_kore/"
+        run: flutter build web --release --base-href "/nan_kore/"
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
