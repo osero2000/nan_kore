@@ -2,33 +2,47 @@
 
 name: Deploy to GitHub Pages
 
-# mainブランチにpushされた時に、このワークフローを実行する
+# ワークフローが実行されるタイミングを指定
 on:
+  # mainブランチにpushされた時に実行
   push:
     branches:
       - main
+  # Actionsタブから手動で実行できるようにする
+  workflow_dispatch:
+
+# ワークフローに与える権限を設定
+permissions:
+  contents: read
+  pages: write
+  id-token: write
 
 jobs:
   build_and_deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest # 実行環境としてUbuntuの最新版を使用
     steps:
-      # 1. リポジトリのソースコードをチェックアウト（取得）する
       - name: Checkout
         uses: actions/checkout@v4
 
-      # 2. Flutter環境をセットアップする
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
           channel: 'stable' # 安定版のFlutterを使用
 
-      # 3. Flutterウェブアプリをビルドする
       - name: Build Web App
         run: flutter build web --base-href "/nan_kore/"
 
-      # 4. ビルドした成果物をgh-pagesブランチにデプロイする
-      - name: Deploy to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v4
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./build/web
+          path: ./build/web
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
