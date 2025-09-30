@@ -138,7 +138,7 @@ class _CountScreenState extends State<CountScreen> {
                     style: Theme.of(context).textTheme.displayLarge?.copyWith(
                         fontWeight: FontWeight.bold,
                         color: Theme.of(context).colorScheme.primary,
-                        fontSize: 160),
+                        fontSize: 120), //カウント数のfontサイズ
                   ),
                 ],
               ),
@@ -154,8 +154,8 @@ class _CountScreenState extends State<CountScreen> {
         ),
         // SizedBoxで囲んで、好きなサイズを指定しちゃお！
         floatingActionButton: SizedBox(
-          width: 200.0,
-          height: 200.0,
+          width: 180.0,
+          height: 180.0,
           child: FloatingActionButton(
             onPressed: _incrementCount,
             // ボタンに合わせてアイコンも大きくするとイイ感じ！
