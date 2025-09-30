@@ -1,30 +1,47 @@
 // This is a basic Flutter widget test.
-//
-// To perform an interaction with a widget in your test, use the WidgetTester
-// utility in the flutter_test package. For example, you can send tap and scroll
-// gestures. You can also use WidgetTester to find child widgets in the widget
-// tree, read text, and verify that the values of widget properties are correct.
 
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:hive/hive.dart';
+import 'package:nan_kore/models/activity.dart';
+import 'package:nan_kore/models/record.dart';
+import 'package:nan_kore/models/tag.dart';
 
 import 'package:nan_kore/main.dart';
 
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
+  // テストが始まる前に、一回だけ実行されるセットアップ処理
+  setUpAll(() async {
+    // テスト用のHiveの初期化
+    // テスト中に生成されるファイルがどこかに保存されるように、一時的なパスを指定する
+    final tempDir = await Directory.systemTemp.createTemp('hive_test');
+    Hive.init(tempDir.path);
+
+    // アプリで使っているAdapterをすべて登録する
+    Hive.registerAdapter(TagAdapter());
+    Hive.registerAdapter(ActivityAdapter());
+    Hive.registerAdapter(RecordAdapter());
+
+    // アプリで使っているBoxをすべて開ける
+    await Hive.openBox<Activity>('activities');
+    await Hive.openBox<Tag>('tags');
+    await Hive.openBox<Record>('records');
+  });
+
+  // テストが終わった後に、一回だけ実行される後片付け処理
+  tearDownAll(() async {
+    await Hive.close();
+  });
+
+  testWidgets('アプリ起動時にダッシュボードが表示されるかテスト', (WidgetTester tester) async {
+    // MyAppウィジェットを描画する
     await tester.pumpWidget(const MyApp());
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
+    // AppBarのタイトルが「ダッシュボード」であることを確認
+    expect(find.text('ダッシュボード'), findsOneWidget);
 
-    // Tap the '+' icon and trigger a frame.
+    // 画面右下の「+」ボタン（FloatingActionButton）があることを確認
     await tester.tap(find.byIcon(Icons.add));
-    await tester.pump();
-
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
   });
 }

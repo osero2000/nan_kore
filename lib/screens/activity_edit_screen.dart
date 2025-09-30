@@ -18,7 +18,6 @@ class _ActivityEditScreenState extends State<ActivityEditScreen> {
   final _formKey = GlobalKey<FormState>();
   late final TextEditingController _nameController;
   late final TextEditingController _targetCountController;
-  late final TextEditingController _voiceCommandsController;
   final List<Tag> _selectedTags = [];
   final _newTagController = TextEditingController();
 
@@ -31,14 +30,11 @@ class _ActivityEditScreenState extends State<ActivityEditScreen> {
       _nameController = TextEditingController(text: activity.name);
       _targetCountController =
           TextEditingController(text: activity.targetCount.toString());
-      _voiceCommandsController =
-          TextEditingController(text: activity.voiceCommands.join(', '));
       _selectedTags.addAll(activity.tags);
     } else {
       // 新規作成モード
       _nameController = TextEditingController();
       _targetCountController = TextEditingController(text: '10');
-      _voiceCommandsController = TextEditingController();
     }
   }
 
@@ -74,18 +70,11 @@ class _ActivityEditScreenState extends State<ActivityEditScreen> {
     }
     _formKey.currentState!.save();
 
-    final commandList = _voiceCommandsController.text
-        .split(',')
-        .map((e) => e.trim())
-        .where((e) => e.isNotEmpty)
-        .toList();
-
     if (widget.activity != null) {
       // 更新
       final activityToUpdate = widget.activity!;
       activityToUpdate.name = _nameController.text;
       activityToUpdate.targetCount = int.parse(_targetCountController.text);
-      activityToUpdate.voiceCommands = commandList;
       activityToUpdate.tags.clear();
       activityToUpdate.tags.addAll(_selectedTags);
       await activityToUpdate.save();
@@ -100,7 +89,6 @@ class _ActivityEditScreenState extends State<ActivityEditScreen> {
         name: _nameController.text,
         targetCount: int.parse(_targetCountController.text),
         tags: activityTags,
-        voiceCommands: commandList,
       );
       await activitiesBox.add(newActivity);
     }
@@ -113,7 +101,6 @@ class _ActivityEditScreenState extends State<ActivityEditScreen> {
   void dispose() {
     _nameController.dispose();
     _targetCountController.dispose();
-    _voiceCommandsController.dispose();
     _newTagController.dispose();
     super.dispose();
   }
@@ -165,14 +152,6 @@ class _ActivityEditScreenState extends State<ActivityEditScreen> {
                       }
                       return null;
                     },
-                  ),
-                  const SizedBox(height: 16),
-                  TextFormField(
-                    controller: _voiceCommandsController,
-                    decoration: const InputDecoration(
-                      labelText: '音声コマンド',
-                      hintText: '「プラス,追加,いっこ」のようにカンマ区切りで入力',
-                    ),
                   ),
                   const SizedBox(height: 24),
                   Text('タグ', style: Theme.of(context).textTheme.titleLarge),
