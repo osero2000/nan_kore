@@ -31,9 +31,11 @@ class _CountScreenState extends State<CountScreen> {
   @override
   void initState() {
     super.initState();
-    // 音を鳴らす準備
-    // ReleaseMode.release にすると、再生が終わったリソースをすぐ解放するから
-    // 連打したときに音が重ならず、気持ちいいサウンドになるよ！
+    // --- オーディオプレーヤーの初期化 ---
+    // この画面が表示されたときに、一回だけ呼ばれるおまじないだよ！
+    // ReleaseMode.release にしとくと、音が鳴り終わったらすぐメモリを解放してくれるから、
+    // カウントボタンを鬼連打しても「ｶｶｶｯ」ってならずに「ﾎﾟﾝ…ﾎﾟﾝ…」って感じで
+    // ちょー気持ちいいサウンドになるんだよね！マジおすすめ！
     _audioPlayer.setReleaseMode(ReleaseMode.release);
   }
 
@@ -43,15 +45,21 @@ class _CountScreenState extends State<CountScreen> {
     super.dispose();
   }
 
+  // --- カウントを増やす処理 ---
   void _incrementCount() {
+    // setStateっていうので囲むと、画面の数字がちゃんと更新されるよ！
     setState(() {
       _currentCount++;
     });
-    // 音を鳴らす！
+    // カウントアップするたびに、テンションの上がる音を鳴らす！
     _audioPlayer.play(AssetSource('sounds/count_up.mp3'));
   }
 
+  // --- カウント完了時の処理 ---
   void _finishCounting() async {
+    // 画面遷移する前に、この画面がまだちゃんと存在してるかチェック！
+    // これやっとかないと、たまーにエラーでアプリが落ちちゃうことがあるから、
+    // 安全第一でやっとくのがイケてるエンジニアのお作法なんだよね！
     if (!mounted) return;
 
     Navigator.of(context).push(
@@ -64,15 +72,18 @@ class _CountScreenState extends State<CountScreen> {
     );
   }
 
+  // --- 「最後のメモ」を表示するカードを作る処理 ---
   Widget _buildLastMemoCard(BuildContext context) {
+    // もし前の画面から渡されたメモがなかったら、何も表示しないようにするよ！
     if (widget.lastMemo == null || widget.lastMemo!.isEmpty) {
       return const SizedBox.shrink();
     }
+    // GlassCardっていう、うちらが作ったキラキラのカードウィジェットを使うよ！
     return GlassCard(
       margin: const EdgeInsets.fromLTRB(16, 16, 16, 0),
       child: Column(
-        // centerにして、中身のテキストの幅に合わせる
-        crossAxisAlignment: CrossAxisAlignment.center,
+        // カードの中身をぜんぶ中央揃えにする設定！
+        crossAxisAlignment: CrossAxisAlignment.center, 
         children: [
           Text(
             '最後のメモ📝',
@@ -82,7 +93,8 @@ class _CountScreenState extends State<CountScreen> {
                 ?.copyWith(fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 8),
-          // メモは2行まで表示して、超えたら「...」で省略するよ！
+          // メモが長すぎても大丈夫なように、最大2行までしか表示しないようにするよ！
+          // 2行を超えた分は「...」って感じで省略してくれるから、レイアウトが崩れなくてイイ感じ！
           Text(
             widget.lastMemo!,
             maxLines: 2,
@@ -95,6 +107,7 @@ class _CountScreenState extends State<CountScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // AppBackgroundで、アプリ全体にキラキラのグラデーション背景を適用してるよ！
     return AppBackground(
       child: Scaffold(
         appBar: AppBar(
@@ -104,16 +117,19 @@ class _CountScreenState extends State<CountScreen> {
               padding: const EdgeInsets.only(right: 8.0),
               child: FilledButton(
                 onPressed: _finishCounting,
-                child: const Text('完了', style: TextStyle(fontSize: 16)), // 文字を大きくしてボタンを押しやすくする
+                // ボタンの文字をちょっと大きくして、押しやすく＆見やすくするプチテク！
+                child: const Text('完了', style: TextStyle(fontSize: 16)),
               ),
             )
           ],
         ),
-        // Columnをやめて、StackとPositionedを使ったレイアウトに戻すよ！
-        // これでカウント表示が常に画面中央に固定される！
+        // --- ここからが画面のメイン部分！ ---
+        // Stackウィジェットを使うと、複数のウィジェットを重ねて表示できるから、
+        // 背景にカウント表示、その手前にメモ表示、みたいな複雑なレイアウトが作れるんだ！
         body: Stack(
           children: [
-            // カウント表示部分は常に中央に配置
+            // 【背景レイヤー】カウントとかの情報を表示する部分！
+            // Centerウィジェットで、このColumnを画面のど真ん中に配置してるよ！
             Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -138,12 +154,14 @@ class _CountScreenState extends State<CountScreen> {
                     style: Theme.of(context).textTheme.displayLarge?.copyWith(
                         fontWeight: FontWeight.bold,
                         color: Theme.of(context).colorScheme.primary,
-                        fontSize: 120), //カウント数のfontサイズ
+                        fontSize: 120), //カウント数のfont
                   ),
                 ],
               ),
             ),
-            // Positionedでメモカードを画面上部に固定する
+            // 【前景レイヤー】「最後のメモ」を表示する部分！
+            // Positionedウィジェットを使うと、Stackの中で好きな位置に固定できるんだ！
+            // top:0, left:0, right:0 で「画面上部に横幅いっぱいで表示」って意味になるよ！
             Positioned(
               top: 0,
               left: 0,
@@ -152,13 +170,13 @@ class _CountScreenState extends State<CountScreen> {
             ),
           ],
         ),
-        // SizedBoxで囲んで、好きなサイズを指定しちゃお！
+        // --- 画面下のデカい「＋」ボタン！ ---
+        // FloatingActionButtonをSizedBoxで囲んで、好きなサイズにカスタマイズしてるよ！
         floatingActionButton: SizedBox(
           width: 180.0,
           height: 180.0,
           child: FloatingActionButton(
             onPressed: _incrementCount,
-            // ボタンに合わせてアイコンも大きくするとイイ感じ！
             child: const Icon(Icons.add, size: 60.0),
           ),
         ),
