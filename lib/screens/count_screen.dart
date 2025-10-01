@@ -160,13 +160,21 @@ class _CountScreenState extends State<CountScreen> {
               ),
             ),
             // 【前景レイヤー】「最後のメモ」を表示する部分！
-            // Positionedウィジェットを使うと、Stackの中で好きな位置に固定できるんだ！
-            // top:0, left:0, right:0 で「画面上部に横幅いっぱいで表示」って意味になるよ！
+            // 1. Positioned で「上端に固定」し、「横幅いっぱいのキャンバス」を作る (left: 0, right: 0)
             Positioned(
               top: 0,
-              left: 0,
-              right: 0,
-              child: _buildLastMemoCard(context),
+              left: 0,   
+              right: 0,  
+              // 2. Column で「縦の広がりを制限」する
+              child: Column(
+                mainAxisSize: MainAxisSize.min, // 👈 縦幅を中身（カード）の高さだけに制限する！！
+                children: [
+                  // 3. Center で「中身のカードを中央寄せ」する
+                  Center(
+                    child: _buildLastMemoCard(context),
+                  ),
+                ],
+              ),
             ),
           ],
         ),
