@@ -1,16 +1,77 @@
-# nan_kore
+# なんでもカウンター (Nan-Kore)
 
-A new Flutter project.
+日々のあらゆる活動や習慣を「なんでも」記録して、可視化・分析できるカウンターアプリです。
 
-## Getting Started
+## ✨ 概要
 
-This project is a starting point for a Flutter application.
+「今日の筋トレ、何回やったっけ？」「今週、何回本を読んだかな？」
+そんな日々のちょっとした活動記録から、習慣化したいことのトラッキングまで、このアプリ一つで管理できます。
+シンプルな操作性と美しいUIで、あなたの頑張りを楽しくサポートします。
 
-A few resources to get you started if this is your first Flutter project:
+## 🚀 主な機能
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+- **アクティビティ管理**
+    - 記録したい活動を「アクティビティ」として自由に登録できます。
+    - 目標回数を設定してモチベーションを維持できます。
+    - アクティビティはいつでも編集・削除が可能です。
+    - 削除したアクティビティは「元に戻す」機能で復元できるので安心です。
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+- **カウント記録**
+    - 各アクティビティの回数を簡単に記録できます。
+    - 記録時にメモを残すことも可能です。
+
+- **ダッシュボード**
+    - 登録したアクティビティを一覧で確認できます。
+    - すりガラス風の美しいカードUIを採用しています。
+    - アクティビティ名（ひらがな・カタカナ対応）での検索機能。
+    - タグを使った柔軟なフィルタリング機能。
+
+- **タグ付け**
+    - 「#筋トレ」「#勉強」のようにアクティビティをタグで分類できます。
+    - タグごとに色を設定して、視覚的に分かりやすく管理できます。
+
+- **統計**
+    - これまでの記録をグラフなどで視覚的に振り返ることができます。（`StatsScreen`）
+
+## 🛠️ 技術スタック
+
+このアプリは以下の技術を使用して開発されています。
+
+- **フレームワーク**: Flutter
+- **言語**: Dart
+- **ローカルデータベース**: Hive
+- **日付フォーマット**: intl
+- **状態管理**: `StatefulWidget` + `ValueListenableBuilder`
+
+## 📦 セットアップ
+
+開発環境でこのプロジェクトを実行する手順は以下の通りです。
+
+1.  **Flutterのインストール**
+    お使いの環境にFlutter SDKがインストールされていることを確認してください。
+
+2.  **リポジトリのクローン**
+    ```bash
+    git clone https://github.com/your-username/nan_kore.git
+    cd nan_kore
+    ```
+
+3.  **依存パッケージのインストール**
+    ```bash
+    flutter pub get
+    ```
+
+4.  **コード生成 (Hive)**
+    モデルクラスを変更した場合は、以下のコマンドで `*.g.dart` ファイルを再生成する必要があります。
+    ```bash
+    flutter packages pub run build_runner build --delete-conflicting-outputs
+    ```
+
+5.  **アプリの実行**
+    ```bash
+    flutter run
+    ```
+
+## 📄 ライセンス
+
+このプロジェクトは MIT License の下で公開されています。
